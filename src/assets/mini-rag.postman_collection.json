@@ -13,12 +13,43 @@
         "method": "GET",
         "header": [],
         "url": {
-          "raw": "{{api}}/welcome",
+          "raw": "{{api}}/",
           "host": [
             "{{api}}"
           ],
           "path": [
-            "welcome"
+            ""
+          ]
+        }
+      },
+      "response": []
+    },
+    {
+      "name": "upload",
+      "request": {
+        "method": "POST",
+        "header": [],
+        "body": {
+          "mode": "formdata",
+          "formdata": [
+            {
+              "key": "file",
+              "type": "file",
+              "src": [
+                "/home/ahmad/Projects/AI/NLP/mini-rag/test/dummy-data/wiki.txt"
+              ]
+            }
+          ]
+        },
+        "url": {
+          "raw": "{{api}}/data/upload/0",
+          "host": [
+            "{{api}}"
+          ],
+          "path": [
+            "data",
+            "upload",
+            "0"
           ]
         }
       },

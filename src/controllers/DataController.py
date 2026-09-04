@@ -27,27 +27,27 @@ class DataController(BaseController):
 
         cleaned_filename = self.get_clean_filename(org_filename=org_filename)
 
-        new_file_path = self.get_semi_filename(
+        new_file_path, filename = self.get_semi_filename(
             project_path=project_path,
             cleaned_filename=cleaned_filename,
         )
 
 
         while os.path.exists(new_file_path):
-            new_file_path = self.get_semi_filename(
+            new_file_path, filename = self.get_semi_filename(
                 project_path=project_path, 
                 cleaned_filename=cleaned_filename
             )
 
-        return new_file_path
+        return new_file_path, filename
 
     def get_semi_filename(self, project_path, cleaned_filename):
-        random_filename = self.generate_random_string()
+        random_key = self.generate_random_string()
         new_file_path = os.path.join(
             project_path,
-            random_filename + '_' + cleaned_filename
+            random_key + '_' + cleaned_filename
         )
-        return new_file_path
+        return new_file_path, random_key + '_' + cleaned_filename
 
     def get_clean_filename(self, org_filename: str,):
 
