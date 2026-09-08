@@ -125,3 +125,134 @@ class ResponseSignal(Enum):
                 }
             )
     ```
+
+    + Create docker image for MongoDB @ `docker-compose.yml` like ```yaml
+        services:
+            mongodb:
+                image: mongo:latest
+                container_name: mongodb
+                ports:
+                - "27007:27017"
+                volumes:
+                - ./mongodb:/data/db
+                networks:
+                - backend   
+                restart: always
+            networks:
+                backend:
+     ```
+
+    + Define configs in `.env` for MongoDB like ```py
+        MONGODB_URL="mongodb://localhost:27007"
+        MONGODB_DATABASE="mini-rag"
+    ```
+
+    + You can install `Studio T3` for MongoDB
+
+    + Install `motor` mongodb *asyncio* lib supporting via mongodb, don't forget add it @ `requirements.txt`
+    
+    + Prefer to use `os` lib to handle dir paths to be independent on *OS*.
+
+    + Link mongodb + motor + fastapi like ```py
+        from fastapi import FastAPI
+        from motor.motor_asyncio import AsyncIOMotorClient
+        from helpers.config import get_settings
+        app = FastAPI()
+        @app.on_event('startup')
+        async def startup_db_client():
+            settings = get_settings()
+            app.mongo_conn = AsyncIOMotorClient(settings.MONGODB_URL)
+            app.db_client = app.mongo_conn[settings.MONGODB_DATABASE]
+        @app.on_event('shutdown')
+        async def shutdown_db_client():
+            app.mongo_conn.close()
+    ```
+
+    + Define schemes @ `models/db_schemes/` for MongoDB, initially with any collection in MongoDB contain on `_id: UUID`, so add it optionally like ```py
+        from pydantic import BaseModel, Field, validator
+        from typing import Optional
+        from bson.objectid import ObjectId  # bson installed by default with motor
+        class Project(BaseModel):
+            _id: Optional[ObjectId]     # pydantic doesn't contain ObjectId obj, 
+                                        # so define `class Config`
+            project_id: str = Field(..., min_length=1)
+            @classmethod
+            @validator('project_id')
+            def validate_project_id(cls, value:str):
+                if not value.isalnum():
+                    raise ValueError('project_id has to be alphanumeric')
+                # return super().validate(value)
+                return value
+            class Config:
+                arbitrary_types_allowed = True
+    ```
+
+    + As we will need `db_client` & some `config` @ Data Models then we will define `BaseDataModel` as a parent like ```py
+        from helpers.config import get_settings, Settings
+        class BaseDataModel:
+            def __init__(self, db_client: object):
+                self.db_client = db_client
+                self.app_settings: Settings = get_settings()
+    ```
+
+    + We will give `db_client` for `Models` as ```py
+        @data_router.post('/process/{project_id}')
+        async def process_endpoint(request: Request, project_id: str,
+                                    process_request: ProcessRequest):
+            project_model = ProjectModel(db_client=request.app.db_client)
+    ```
+
+    + We will create json obj in `collection` and *we deal with `collection` with json object so we will convert it into obj and versa verse* as ```py 
+        async def create_chunk(self, chunk: DataChunk):
+            result = await self.collection.insert_one(
+                chunk.dict(by_alias=True, exclude_unset=True)
+            )   # by_alias=True, exclude_unset=True to consider 
+                # `_id` in `id: Optional[ObjectId] = Field(None, alias='_id')`
+            chunk.id = result.inserted_id
+            return chunk
+    ```
+
+    + To find some json in `collection` do ```py
+        async def get_chunk(self, chunk_id: str):
+            result = await self.collection.find_one({
+                '_id': ObjectId(chunk_id),
+            })
+            return DataChunk(**result) if result else: None
+    ```
+
+    + To insert bulk of objects for efficient do ```py
+        async def insert_many_chunks(self, chunks: list, batch_size: int = 100):
+            for i in range(0, len(chunks), batch_size):
+                batch = chunks[i:i+batch_size]
+                operation = [
+                    InsertOne(chunk.dict(by_alias=True, exclude_unset=True))
+                    for chunk in batch
+                ]
+                await self.collection.bulk_write(operation)
+            return len(chunks)
+    ```
+
+    + To delete obj do ```py
+        async def delete_chunks_by_project_id(self, project_id: ObjectId):
+            result = await self.collection.delete_many({
+                'chunk_project_id': project_id,
+            })
+            return result.deleted_count
+    ```
+
+    + To do pagination do ```py
+        async def get_all_project(self, page: int = 1, page_size: int = 10):
+            # count total number of documents
+            total_documents = await self.collection.count_documents({})
+            # calculate total number of pages
+            total_pages = total_documents // page_size
+            if total_documents % page_size > 0:
+                total_pages += 1
+            cursor = self.collection.find().skip( (page-1) * page_size )
+                         .limit(page_size)
+            projects = []
+            async for document in cursor:
+                projects.append(Project(**document))
+            return projects, total_pages
+    ```
+

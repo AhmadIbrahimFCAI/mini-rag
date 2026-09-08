@@ -1,7 +1,9 @@
 services:
   mongodb:
-    image: mongo:latest
+    image: mongo:7.0
     container_name: mongodb
+    # environment:
+      # - GLIBC_TUNABLES=glibc.pthread.rseq=0
     ports:
       - "27007:27017"
     volumes:
