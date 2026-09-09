@@ -17,3 +17,16 @@ class Project(BaseModel):
 
     class Config:
         arbitrary_types_allowed = True
+
+
+    @classmethod
+    def get_indexes(cls,):
+        return [
+            {
+                "key": [
+                    ("project_id", 1)   # 1 for Asc, -1 for Desc
+                ],
+                "name": "project_id_index_1",   # unique index name across all indexes
+                "unique": True,
+            }
+        ]

@@ -2,13 +2,15 @@ from fastapi import APIRouter, Depends, UploadFile, status, Request
 from fastapi.responses import JSONResponse
 from helpers.config import get_settings, Settings
 from controllers import DataController, ProjectController, ProcessController
-import aiofiles
+import aiofiles, logging, os
 from models import ResponseSignal
-import logging
 from .schemes.data import ProcessRequest
 from models.ProjectModel import ProjectModel
-from models.db_schemes import DataChunk
+from models.db_schemes import DataChunk, Asset
 from models.ChunkModel import ChunkModel
+from models.AssetModel import AssetModel
+from models.enums.AssetTypeEnum import AssetTypeEnum
+
 
 logger = logging.getLogger('uvicorn.error')
 
@@ -21,7 +23,7 @@ data_router = APIRouter(
 async def upload_data(request: Request, project_id: str, file: UploadFile, 
                       app_settings: Settings = Depends(get_settings)):
 
-    project_model = ProjectModel(
+    project_model = await ProjectModel.create_instance(
         db_client=request.app.db_client,
     )
 
@@ -60,11 +62,22 @@ async def upload_data(request: Request, project_id: str, file: UploadFile,
                 'signal': ResponseSignal.FILE_UPLOAD_FAILED.value,
             }
         )
-    
+
+    # store the assets into the database
+    asset_model = await AssetModel.create_instance(db_client=request.app.db_client)
+    print(file_path, type(os.path.getsize(file_path)))
+    asset_resource = Asset(
+        asset_project_id=project.id,
+        asset_type=AssetTypeEnum.FILE.value,
+        asset_name=file_id,
+        asset_size=os.path.getsize(file_path),
+    )
+    asset_record = await asset_model.create_asset(asset=asset_resource)
+
     return JSONResponse(
         content={
             'signal': ResponseSignal.FILE_UPLOAD_SUCCESS.value,
-            'file_id': file_id,
+            'file_id': str(asset_record.id),
             'project_id': str(project.id),
         }
     )
@@ -76,7 +89,7 @@ async def process_endpoint(request: Request, project_id: str, process_request: P
     overlap_size = process_request.overlap_size
     do_reset = process_request.do_reset
 
-    project_model = ProjectModel(db_client=request.app.db_client)
+    project_model = await ProjectModel.create_instance(db_client=request.app.db_client)
 
 
     project = await project_model.get_project_or_create_one(
@@ -88,6 +101,13 @@ async def process_endpoint(request: Request, project_id: str, process_request: P
     process_ctrl = ProcessController(project_id=project_id)
 
     file_content = process_ctrl.get_file_content(file_id=file_id)
+    if not file_content:
+        return JSONResponse(
+            status_code = status.HTTP_400_BAD_REQUEST,
+            content={
+                'signal': ResponseSignal.PROCESSING_FAILED.value,
+            }
+        )
 
     file_chunks = process_ctrl.process_file_content(
         file_id=file_id,
@@ -114,7 +134,7 @@ async def process_endpoint(request: Request, project_id: str, process_request: P
         for i, chunk in enumerate(file_chunks)
     ]
 
-    chunk_model = ChunkModel(db_client=request.app.db_client,)
+    chunk_model = await ChunkModel.create_instance(db_client=request.app.db_client,)
 
     if do_reset == 1:
         _ = await chunk_model.delete_chunks_by_project_id(project_id=project.id)

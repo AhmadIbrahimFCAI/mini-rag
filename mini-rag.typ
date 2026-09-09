@@ -20,7 +20,7 @@ fastapi==0.141.1
 uvicorn[standard]==0.52.4
 ``` and you can import them via ```bash pip install -r requirements.txt```
 
-+ Add `.env` file UPPER_CASE keys for all your configurations & secret keys, copy `.env.example` from `.env` without adding any secret data. ```py
++ Add `.env` file UPPER_CASE keys for all your configurations & secret keys, copy `.env.example` from `.env` without adding any secret data and about the values have to be arounded by double-quotation `"` not single `'` and don't contains `#` (some parsers consider it comment). ```py
 APP_NAME="Mini-RAG"
 APP_VERSION="0.1"
 FILE_ALLOWED_TYPES=["text/plain", "application/pdf"]
@@ -140,7 +140,7 @@ class ResponseSignal(Enum):
                 restart: always
             networks:
                 backend:
-     ```
+    ```
 
     + Define configs in `.env` for MongoDB like ```py
         MONGODB_URL="mongodb://localhost:27007"
@@ -255,4 +255,77 @@ class ResponseSignal(Enum):
                 projects.append(Project(**document))
             return projects, total_pages
     ```
+\
 
+#line(length: 100%)
+
+== Code Improvement
+
+    + Add `username` & `password` for data base @ `docker/.env`, use them @ `docker-compose.yml` and update `.env` with them like ```sh
+    MONGO_INITDB_ROOT_USERNAME=admin
+    MONGO_INITDB_ROOT_PASSWORD=admin
+    ``` ```yaml
+    environment:
+        - MONGO_INITDB_ROOT_USERNAME=${MONGO_INITDB_ROOT_USERNAME}
+        - MONGO_INITDB_ROOT_PASSWORD=${MONGO_INITDB_ROOT_PASSWORD}
+    ``` ```sh
+    MONGODB_URL="mongodb://<username>:<password>@localhost:27007"
+    ```
+
+    + To create indeces for collection define indeces and assign them like ```py
+    @classmethod
+    def get_indexes(cls):
+        return [
+            {
+                'key':[
+                    ('asset_project_id', 1),    # 1 for Asc, -1 for Desc
+                ],
+                'name': 'asset_project_id_index_1',     # unique index name
+                'unique': False,
+            },
+            {
+                'key':[
+                    ('asset_project_id', 1),
+                    ('asset_name', 1),
+                ],
+                'name': 'asset_project_id_name_index_1',
+                'unique': True,
+            },
+        ]
+    ```
+    ```py
+        class ProjectModel(BaseDataModel):
+        # Note that `__init__` hasn't to be async
+        def __init__(self, db_client: object):
+            super().__init__(db_client=db_client)
+            self.collection = self.db_client[DataBaseEnum.COLLECTION_PROJECT_NAME.value]
+
+
+        # `init_collection` has to be async, so it use mongodb fn
+        async def init_collection(self):
+            all_collections = await self.db_client.list_collection_names()
+            if DataBaseEnum.COLLECTION_PROJECT_NAME.value not in all_collections:
+                self.collection = self.db_client[DataBaseEnum
+                    .COLLECTION_PROJECT_NAME.value]
+                indexes = Project.get_indexes()
+                for index in indexes:
+                    await self.collection.create_index(
+                        index['key'],
+                        name=index['name'],
+                        unique=index['unique'],
+                    )
+
+        # `init_collection` has to be called after `__init__` directly,
+        # so we create thisss method
+        @classmethod
+        async def create_instance(cls,db_client: object):
+            instance = cls(db_client)
+            await instance.init_collection()
+            return instance
+    ```
+    + To search by indexing do ```py
+    async def get_all_project_assets(self, asset_project_id: str):
+        return await self.collection.find({
+            'asset_project_id': ObjectId(asset_project_id) if isinstance(asset_project_id, str) else asset_project_id,
+        }).to_list(length=None)
+    ```
