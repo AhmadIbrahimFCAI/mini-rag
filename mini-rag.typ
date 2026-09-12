@@ -329,3 +329,72 @@ class ResponseSignal(Enum):
             'asset_project_id': ObjectId(asset_project_id) if isinstance(asset_project_id, str) else asset_project_id,
         }).to_list(length=None)
     ```
+\
+#line(length: 100%)
+
+== LLM
+
++ define `factory design pattern` & @ `providers/` define supported LLM and their name in `LLMEnums` and global interface @ `LLMInterface` and do this structure ```sh
+stores
+├── __init__.py
+└── llm
+    ├── __init__.py
+    ├── LLMEnums.py
+    ├── LLMInterface.py
+    └── providers
+        ├── __init__.py
+        └── OpenAIProvider.py
+``` 
+\
+```py
+from enum import Enum
+class LLMEnums(Enum):
+    OPENAI = "OPENAI"
+    COHERE = "COHERE"
+```
+```py
+from abc import ABC, abstractmethod
+class LLMInterface(ABC):
+    @abstractmethod
+    def set_generation_model(self, model_id:str):
+        pass
+    @abstractmethod
+    def set_embedding_model(self, model_id: str, embedding_size: int):
+        pass
+    @abstractmethod
+    def generate_text(self, prompt: str, max_output_tokens: int,
+        temperature: float = None):
+        pass
+    @abstractmethod
+    def embed_text(self, text: str, document_type: str):
+        pass
+    @abstractmethod
+    def construct_prompt(self, prompt: str, role: str):
+        pass
+```
+    - Avoid `smell code` possible to make disaster
+
+    - With dealing with 3rd party (AI provider) enhancement your validation to metegate error and changing AI provider interface like ```py
+    def embed_text(self, text: str, document_type: str):
+
+        if not self.client:
+            self.logger.error('Embedding model for OpenAI was not set')
+            return None
+
+        if not self.embedding_model_id:
+            self.logger.error('Embedding model for OpenAI was not set')
+            return None
+
+        response = self.client.embeddings.create(
+            model = self.embedding_model_id,
+            input = text,
+        )
+
+        if not response or not response.data or len(response.data) == 0 or \
+                not response.data[0].embedding:
+            self.logger.error('Error while ebedding text with OpenAI')
+            return None
+
+        return response.data[0].embedding
+    ```
+
