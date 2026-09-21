@@ -4,6 +4,7 @@ from ..VectorDBEnums import DistanceMethodEnums
 import logging
 from typing import List
 import uuid
+from models.db_schemes import RetrivedDocument
 
 
 class QdrantDBProvider(VectorDBInterface):
@@ -117,13 +118,26 @@ class QdrantDBProvider(VectorDBInterface):
 
         return len(texts)
 
-    def search_by_vector(self, collection_name: str, vector: list, limit: int):
-        return self.client.query_points(
-            collection_name=collection_name,
-            vector=vector,
-            limit=limit,
-        )
+    def search_by_vector(self, collection_name: str, vector: list, limit: int) -> list[RetrivedDocument] | None:
+        try:
+            results = self.client.query_points(
+                collection_name=collection_name,
+                query=vector,
+                limit=limit,
+            )
+        except:
+            self.logger.error(f"collection {collection_name} not found")
+            return None
 
+        if not results or len(results)==0: return None
+
+        return [
+            RetrivedDocument(**{
+                "score": result.score,
+                "text": result.payload['text'],
+            })
+            for result in results
+        ]
 
 
 
