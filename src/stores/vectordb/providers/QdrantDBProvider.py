@@ -91,7 +91,8 @@ class QdrantDBProvider(VectorDBInterface):
             metadata = [None] * len(text)
 
         if record_ids is None:
-            record_ids = [uuid.uuid7() for _ in range(text)]
+            # record_ids = [uuid.uuid7() for _ in range(text)]
+            record_ids = list(range(0,len(texts)))
 
         records = [
             models.PointStruct(

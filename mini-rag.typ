@@ -398,3 +398,8 @@ class LLMInterface(ABC):
         return response.data[0].embedding
     ```
 
++ To convert obj into json obj do ```py
+    json.loads(
+        json.dumps(collection_info, default=lambda x: x.__dict__)
+    )
+```
