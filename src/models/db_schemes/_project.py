@@ -5,7 +5,7 @@ from bson.objectid import ObjectId
 
 class Project(BaseModel):
     id: Optional[ObjectId] = Field(None, alias='_id')
-    project_id: str = Field(..., min_length=1)
+    project_id: int = Field(..., min_length=1)
 
     @classmethod
     @validator('project_id')

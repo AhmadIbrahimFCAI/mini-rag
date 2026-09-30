@@ -21,7 +21,7 @@ class DataController(BaseController):
 
         return True, ResponseSignal.FILE_VALIDATED_SUCCESS.value
 
-    def generate_unique_filename(self, org_filename: str, project_id: str, ):
+    def generate_unique_filename(self, org_filename: str, project_id: int, ):
 
         project_path = ProjectController().get_project_path(project_id=project_id)
 

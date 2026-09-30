@@ -21,4 +21,6 @@ class LLMInterface(ABC):
     @abstractmethod
     def construct_prompt(self, prompt: str, role: str):
         pass
-
+    
+    def process_text(self, text: str):
+        pass

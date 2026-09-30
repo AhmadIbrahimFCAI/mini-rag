@@ -5,7 +5,7 @@ from models.db_schemes import Project, DataChunk
 from stores.llm.LLMEnums import DocumentTypeEnum
 from typing import List
 import json
-from models.db_schemes import RetrivedDocument
+from models.db_schemes import RetrievedDocument
 from stores.llm.templates.template_parser import TemplateParser
 
 
@@ -19,7 +19,7 @@ class NLPController(BaseController):
         self.embedding_client = embedding_client
         self.template_parser = template_parser
 
-    def create_collection_name(self, project_id: str):
+    def create_collection_name(self, project_id: int):
         return f"collection_{project_id}".strip()
 
     def reset_vector_db_collection(self, project: Project):
@@ -69,7 +69,7 @@ class NLPController(BaseController):
             )
         return True
 
-    def search_vector_db_collection(self, project: Project, text: str, limit: int = 10) -> list[RetrivedDocument] | bool:
+    def search_vector_db_collection(self, project: Project, text: str, limit: int = 10) -> list[RetrievedDocument] | bool:
         # step1: get collection name
         collection_name = self.create_collection_name(project_id=project.project_id)
 
@@ -113,7 +113,7 @@ class NLPController(BaseController):
         document_prompts = '\n'.join([
             self.template_parser.get('rag', 'document_prompt', {
                 'doc_num': idx,
-                'chunk_text': doc.text,
+                'chunk_text': self.generation_client.process_text(doc.text),
             })
             for idx, doc in enumerate(retrived_documents, 1)
         ])
