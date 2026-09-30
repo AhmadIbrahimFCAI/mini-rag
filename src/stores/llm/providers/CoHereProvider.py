@@ -77,13 +77,17 @@ class  CoHereProvider(LLMInterface):
         if document_type == DocumentTypeEnum.QUERY.value:
             input_type = CoHereEnums.QUERY
 
-        response = self.client.embed(
-            model = self.embedding_model_id,
-            texts = [self.process_text(text)],
-            input_type = input_type,
-            embedding_types = ['float'],
-        )
-
+        try:
+            response = self.client.embed(
+                model = self.embedding_model_id,
+                texts = [self.process_text(text)],
+                input_type = input_type,
+                embedding_types = ['float'],
+            )
+        except Exception as e:
+            self.logger.error(f"exception @ CoHere Embed: {e}")
+            return None
+        
         if not response or not response.embeddings or not response.embeddings.float:
             self.logger.error("Error while embedding text with CoHere")
             return None
