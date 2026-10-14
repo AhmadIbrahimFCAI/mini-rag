@@ -9,19 +9,19 @@ langchain-community==0.4.2
 pymupdf==1.28.2
 motor==3.7.1
 pydantic-mongo==3.1.0
-openai==3.29.0
+openai==3.31.0
 cohere==7.2.0
 qdrant-client==1.19.1
-SQLAlchemy==2.1.4
+SQLAlchemy[asyncio]==2.1.4
 asyncpg==0.32.0
 alembic==1.20.0
 psycopg2==2.9.13
-pgvector==0.5.1s
+pgvector==0.5.1
 nltk==3.10.3
 
 # monitoring
 prometheus-client==0.26.0
-tarlette-exporter==0.24.0
+starlette-exporter==0.24.0
 
 #Health checks
 fastapi-health==0.4.0

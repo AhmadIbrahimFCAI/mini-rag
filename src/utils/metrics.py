@@ -10,7 +10,7 @@ from prometheus_client import (
 )
 from starlette.middleware.base import BaseHTTPMiddleware
 
-METRICS_PATH = "/As$gRgF4Jzfu6OGmF"
+METRICS_PATH = "/AsgRgF4Jzfu6OGmF"
 
 # ---------------------------------------------------------------------------
 # Metric definitions
@@ -221,7 +221,7 @@ def setup_metrics(app: FastAPI, version: str = "1.0.0"):
 #     # Add Prometheus middleware
 #     app.add_middleware(PrometheusMiddleware)
 
-#     @app.get("/As$gRgF4Jzfu6OGmF", include_in_schema=False)
+#     @app.get("/AsgRgF4Jzfu6OGmF", include_in_schema=False)
 #     def metrics():
 #         return Response(generate_latest(), media_type=CONTENT_TYPE_LATEST)
 
