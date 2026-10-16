@@ -65,5 +65,6 @@ $ cp .env.example .env
 
 ```bash
 $ python -m celery -A celery_app worker --loglevel=info --without-mingle --without-gossip
+$ python -m celery -A celery_app worker --loglevel=info --queues=default,mail_server_queue
 ```
 

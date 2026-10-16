@@ -8,14 +8,12 @@ import asyncio
 logger = logging.getLogger('celery.task')
 
 
-@celery_app.task(bind=True) # to make next fn method @ celery_app
+@celery_app.task(bind=True, name="tasks.mail_service.send_email_reports") # to make next fn method @ celery_app to get self (task_instance)
 def send_email_reports(self, mail_wait_seconds: int):
 
     return  asyncio.run(_send_email_reports(self, mail_wait_seconds))
 
 async def _send_email_reports(task_instance, mail_wait_seconds: int):
-    print("type(task_instance):", type(task_instance))
-
     started_at = str(datetime.now())
 
     task_instance.update_state(

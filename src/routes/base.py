@@ -32,7 +32,7 @@ async def send_reports(app_settings: Settings = Depends(get_settings)):
     task = send_email_reports.delay(
         mail_wait_seconds=3,
     )
-    # ==== END ==== send reports
+    # ===== END ===== send reports
 
     return {
         'success': True,
