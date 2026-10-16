@@ -145,6 +145,46 @@ services:
     restart: always
 
 
+  # RabbitMQ (Message Broker)
+  rabbitmq:
+    image: rabbitmq:4.3.6-management-alpine
+    container_name: rabbitmq
+    ports:
+      - "5672:5672"   # AMQP (Advanced Messaging Queueing protocol) port
+      - "15672:15672" # Management UI port
+    volumes:
+      - rabbitmq_data:/var/lib/rabbitmq
+      - ./rabbitmq/rabbitmq.conf:/etc/rabbitmq/rabbitmq.conf
+    env_file:
+      - ./env/.env.rabbitmq
+    networks:
+      - backend
+    restart: always
+    healthcheck:
+      test: ["CMD", "rabbitmq-diagnostics", "ping"]
+      timeout: 10s
+      retries: 5
+
+
+  # Redis (Results Backend & Cache)
+  redis:
+    image: redis:8.10.2-alpine
+    container_name: redis
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    env_file:
+      - ./env/.env.redis
+    networks:
+      - backend
+    restart: always
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      timeout: 10s
+      retries: 5
+    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD:-minirag_redis_2222}"]
+
 
 
 networks:
@@ -157,3 +197,5 @@ volumes:
   prometheus_data:
   grafana_data:
   fastapi_data:
+  rabbitmq_data:
+  redis_data:

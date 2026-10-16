@@ -1,10 +1,10 @@
-fastapi==0.143.1
+fastapi==0.143.2
 uvicorn[standard]==0.54.0
 python-multipart==0.0.32
 python-dotenv==1.2.4
 pydantic-settings==2.16.0
 aiofiles==25.1.0
-langchain==1.4.5
+langchain==1.4.6
 langchain-community==0.4.2
 pymupdf==1.28.2
 motor==3.7.1
@@ -25,4 +25,15 @@ starlette-exporter==0.24.0
 
 #Health checks
 fastapi-health==0.4.0
+
+# Task Queue and Background Processing
+celery==5.6.3
+redis==8.1.0
+# kombu for queueing & messaging among Celery & Broker & Result-Backend
+kombu==5.6.2
+# billiard for multi-processing
+billiard==4.3.1
+# vine for promising & callback
+vine==5.1.0
+
 

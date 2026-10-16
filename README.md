@@ -63,3 +63,7 @@ $ cp .env.example .env
 
 - update `.env` with your credentials.
 
+```bash
+$ python -m celery -A celery_app worker --loglevel=info --without-mingle --without-gossip
+```
+
