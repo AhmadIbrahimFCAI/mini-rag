@@ -3,3 +3,7 @@
 GET http://localhost:5000/api/v1/send_reports
 
 ###
+
+GET http://localhost:5000/api/v1/send_reports/task-status/701d0591-d999-489b-b547-a050548973cc
+
+###
