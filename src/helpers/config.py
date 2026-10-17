@@ -54,6 +54,8 @@ class Settings(BaseSettings):
     CELERY_TASK_ACKS_LATE: bool = True
     CELERY_WORKER_CONCURRENCY: int = 2
 
+    CELERY_FLOWER_PASSWORD: str
+
 
     model_config = SettingsConfigDict(env_file=".env", env_file_encoding="utf-8")
 

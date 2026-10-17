@@ -61,6 +61,9 @@ celery_app = Celery(
     include=[
         "tasks.mail_service",
         "tasks.file_processing",
+        "tasks.data_indexing",
+        "tasks.process_workflow",
+        "tasks.maintenance",
     ]
 )
 
@@ -98,9 +101,30 @@ celery_app.conf.update(
             "queue": "mail_server_queue",
         },
         "tasks.file_processing.process_project_files":{
-            "queue": "file_processing"
+            "queue": "file_processing_queue",
+        },
+        "tasks.data_indexing.index_data_content":{
+            "queue": "data_indexing_queue",
+        },
+        "tasks.process_workflow.process_and_push_workflow": {
+            "queue": "file_processing_queue",
+        },
+        "tasks.maintenance.clean_celery_executions_table": {
+            "queue": "default"
+        },
+    },
+
+    beat_schedule={
+        "cleanup-old-task-records": {
+            'task': "tasks.maintenance.clean_celery_executions_table",
+            'schedule': 86400,
+            # 'args': (...)
+
         }
-    }
+    },
+
+    timezone='UTC',
+
 
 
 )

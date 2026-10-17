@@ -65,6 +65,13 @@ $ cp .env.example .env
 
 ```bash
 $ python -m celery -A celery_app worker --loglevel=info --without-mingle --without-gossip
-$ python -m celery -A celery_app worker --loglevel=info --queues=default,mail_server_queue
+$ python -m celery -A celery_app worker --loglevel=info --queues=default,mail_server_queue,file_processing_queue,data_indexing_queue
 ```
 
+```sh
+$ python -m celery -A celery_app flower --port=5555
+$ python -m celery -A celery_app flower --conf=flowerconfig.py
+```
+```sh
+$ cd src && python -m celery -A celery_app beat --loglevel=info
+```
